@@ -477,3 +477,81 @@ events:
       
       
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/CheckCSourceCompiles.cmake:76 (cmake_check_source_compiles)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/FindThreads.cmake:97 (CHECK_C_SOURCE_COMPILES)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/FindThreads.cmake:163 (_threads_check_libc)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6/QtPublicDependencyHelpers.cmake:36 (find_dependency)"
+      - "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6/Qt6Dependencies.cmake:38 (_qt_internal_find_third_party_dependencies)"
+      - "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6/Qt6Config.cmake:180 (include)"
+      - "CMakeLists.txt:9 (find_package)"
+    checks:
+      - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
+    directories:
+      source: "/Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-OWY0hf"
+      binary: "/Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-OWY0hf"
+    cmakeVariables:
+      CMAKE_C_FLAGS: ""
+      CMAKE_C_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/tcl-tk/lib"
+      CMAKE_MODULE_PATH: "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6;/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6/3rdparty/extra-cmake-modules/find-modules;/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6/3rdparty/kwin"
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: "15.6"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk"
+    buildResult:
+      variable: "CMAKE_HAVE_LIBC_PTHREAD"
+      cached: true
+      stdout: |
+        Change Dir: /Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-OWY0hf
+        
+        Run Build Command(s):/Applications/CLion.app/Contents/bin/ninja/mac/ninja -v cmTC_dada7 && [1/2] /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD  -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.6 -fcolor-diagnostics -MD -MT CMakeFiles/cmTC_dada7.dir/src.c.o -MF CMakeFiles/cmTC_dada7.dir/src.c.o.d -o CMakeFiles/cmTC_dada7.dir/src.c.o -c /Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-OWY0hf/src.c
+        [2/2] : && /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.6 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/tcl-tk/lib CMakeFiles/cmTC_dada7.dir/src.c.o -o cmTC_dada7   && :
+        
+      exitCode: 0
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/CheckCXXSourceCompiles.cmake:76 (cmake_check_source_compiles)"
+      - "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6/FindWrapAtomic.cmake:36 (check_cxx_source_compiles)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6/QtPublicDependencyHelpers.cmake:36 (find_dependency)"
+      - "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Core/Qt6CoreDependencies.cmake:36 (_qt_internal_find_third_party_dependencies)"
+      - "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Core/Qt6CoreConfig.cmake:42 (include)"
+      - "/Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/CMakeFindDependencyMacro.cmake:76 (find_package)"
+      - "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6/QtPublicDependencyHelpers.cmake:142 (find_dependency)"
+      - "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Widgets/Qt6WidgetsDependencies.cmake:50 (_qt_internal_find_qt_dependencies)"
+      - "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Widgets/Qt6WidgetsConfig.cmake:40 (include)"
+      - "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6/Qt6Config.cmake:241 (find_package)"
+      - "CMakeLists.txt:9 (find_package)"
+    checks:
+      - "Performing Test HAVE_STDATOMIC"
+    directories:
+      source: "/Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-n3cRcY"
+      binary: "/Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-n3cRcY"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: ""
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: "-L/opt/homebrew/opt/tcl-tk/lib"
+      CMAKE_MODULE_PATH: "/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6;/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6/3rdparty/extra-cmake-modules/find-modules;/Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6/3rdparty/kwin"
+      CMAKE_OSX_ARCHITECTURES: ""
+      CMAKE_OSX_DEPLOYMENT_TARGET: "15.6"
+      CMAKE_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk"
+    buildResult:
+      variable: "HAVE_STDATOMIC"
+      cached: true
+      stdout: |
+        Change Dir: /Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-n3cRcY
+        
+        Run Build Command(s):/Applications/CLion.app/Contents/bin/ninja/mac/ninja -v cmTC_173ef && [1/2] /opt/homebrew/bin/g++-15 -DHAVE_STDATOMIC  -std=gnu++20 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.6 -fdiagnostics-color=always -o CMakeFiles/cmTC_173ef.dir/src.cxx.o -c /Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-n3cRcY/src.cxx
+        [2/2] : && /opt/homebrew/bin/g++-15 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.6 -Wl,-search_paths_first -Wl,-headerpad_max_install_names -L/opt/homebrew/opt/tcl-tk/lib CMakeFiles/cmTC_173ef.dir/src.cxx.o -o cmTC_173ef   && :
+        
+      exitCode: 0
+...

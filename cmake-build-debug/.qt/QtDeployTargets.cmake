@@ -1,0 +1,2 @@
+set(__QT_DEPLOY_TARGET_PasswordManager_FILE /Users/daniel/Desktop/PasswordManager/cmake-build-debug/PasswordManager)
+set(__QT_DEPLOY_TARGET_PasswordManager_TYPE EXECUTABLE)
