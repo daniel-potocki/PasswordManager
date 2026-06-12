@@ -5,64 +5,307 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QScrollArea>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QSqlError>
 
 class MainWindow : public QWidget {
 public:
     MainWindow() {
-        // STACK
-        auto *stack = new QStackedWidget(this);
+        stack = new QStackedWidget(this);
 
+        // =========================
         // LOGIN PAGE
-        QWidget *loginPage = new QWidget();
+        // =========================
+        loginPage = new QWidget();
         auto *loginLayout = new QVBoxLayout(loginPage);
 
-        QLabel *label = new QLabel("Password:");
-        QLineEdit *password = new QLineEdit();
-        password->setEchoMode(QLineEdit::Password);
+        loginPasswordEdit = new QLineEdit();
+        loginPasswordEdit->setEchoMode(QLineEdit::Password);
 
         QPushButton *loginButton = new QPushButton("Login");
-
-        QLabel *errorLabel = new QLabel("");
+        errorLabel = new QLabel();
         errorLabel->setStyleSheet("color: red;");
 
-        loginLayout->addWidget(label);
-        loginLayout->addWidget(password);
+        loginLayout->addWidget(new QLabel("Password:"));
+        loginLayout->addWidget(loginPasswordEdit);
         loginLayout->addWidget(loginButton);
         loginLayout->addWidget(errorLabel);
 
-        // MAIN MENU PAGE
-        QWidget *mainPage = new QWidget();
-        auto *mainLayout = new QVBoxLayout(mainPage);
+        // =========================
+        // MAIN PAGE
+        // =========================
+        mainPage = new QWidget();
+        mainLayout = new QVBoxLayout(mainPage);
 
-        QLabel *welcome = new QLabel("Main Menu!");
-        mainLayout->addWidget(welcome);
+        mainLayout->addWidget(new QLabel("Main Menu"));
 
-        // PAGES
-        stack->addWidget(loginPage);  // index 0
-        stack->addWidget(mainPage);   // index 1
+        QPushButton *openAddBtn = new QPushButton("Add new password");
+        mainLayout->addWidget(openAddBtn);
 
-        // LAYOUT
+        scroll = new QScrollArea();
+        scroll->setWidgetResizable(true);
+
+        container = new QWidget();
+        listLayout = new QVBoxLayout(container);
+
+        scroll->setWidget(container);
+        mainLayout->addWidget(scroll);
+
+        // =========================
+        // INSPECT PAGE
+        // =========================
+        inspectPage = new QWidget();
+        auto *inspectLayout = new QVBoxLayout(inspectPage);
+
+        auto *grid = new QGridLayout();
+
+        QLabel *websiteLbl = new QLabel("Website:");
+        QLabel *usernameLbl = new QLabel("Username:");
+        QLabel *passwordLbl = new QLabel("Password:");
+
+        websiteEdit = new QLineEdit();
+        usernameEdit = new QLineEdit();
+        passwordEditInspect = new QLineEdit();
+        passwordEditInspect->setEchoMode(QLineEdit::Password);
+
+        QPushButton *showBtn = new QPushButton("Show");
+
+        QPushButton *backBtn = new QPushButton("Back");
+        QPushButton *editBtn = new QPushButton("Save Changes");
+
+        grid->addWidget(websiteLbl, 0, 0);
+        grid->addWidget(websiteEdit, 0, 1);
+
+        grid->addWidget(usernameLbl, 1, 0);
+        grid->addWidget(usernameEdit, 1, 1);
+
+        grid->addWidget(passwordLbl, 2, 0);
+        grid->addWidget(passwordEditInspect, 2, 1);
+        grid->addWidget(showBtn, 2, 2);
+
+        inspectLayout->addLayout(grid);
+        inspectLayout->addWidget(backBtn);
+        inspectLayout->addWidget(editBtn);
+
+        // =========================
+        // ADD PAGE
+        // =========================
+        addPage = new QWidget();
+        auto *addLayout = new QVBoxLayout(addPage);
+
+        addWebsite = new QLineEdit();
+        addUsername = new QLineEdit();
+        addPassword = new QLineEdit();
+
+        QPushButton *saveBtn = new QPushButton("Save");
+        QPushButton *cancelBtn = new QPushButton("Cancel");
+
+        addLayout->addWidget(new QLabel("Add Entry"));
+        addLayout->addWidget(addWebsite);
+        addLayout->addWidget(addUsername);
+        addLayout->addWidget(addPassword);
+        addLayout->addWidget(saveBtn);
+        addLayout->addWidget(cancelBtn);
+
+        // =========================
+        // PAGE-STACK
+        // =========================
+        stack->addWidget(loginPage);
+        stack->addWidget(mainPage);
+        stack->addWidget(inspectPage);
+        stack->addWidget(addPage);
+
         auto *rootLayout = new QVBoxLayout(this);
         rootLayout->addWidget(stack);
 
-        // LOGIN LOGIC
+        // =========================
+        // LOGIN PAGE
+        // =========================
         connect(loginButton, &QPushButton::clicked, this, [=]() {
-            if (password->text() == "1234") {
-                errorLabel->setText("");
-                stack->setCurrentIndex(1); // Switch to Main Menu
+            if (loginPasswordEdit->text() == "1234") {
+                errorLabel->clear();
+                loadMainPage();
+                stack->setCurrentIndex(1);
             } else {
                 errorLabel->setText("Wrong password!");
             }
         });
+
+        // =========================
+        // INSERT INTO DB
+        // =========================
+        connect(openAddBtn, &QPushButton::clicked, this, [=]() {
+            stack->setCurrentIndex(3);
+        });
+
+        connect(saveBtn, &QPushButton::clicked, this, [=]() {
+            QSqlQuery query;
+            query.prepare("INSERT INTO passwords (website, username, password) VALUES (?, ?, ?)");
+            query.addBindValue(addWebsite->text());
+            query.addBindValue(addUsername->text());
+            query.addBindValue(addPassword->text());
+
+            if (!query.exec()) {
+                qDebug() << "Insert failed:" << query.lastError().text();
+            }
+
+            addWebsite->clear();
+            addUsername->clear();
+            addPassword->clear();
+
+            loadMainPage();
+            stack->setCurrentIndex(1);
+        });
+
+        connect(cancelBtn, &QPushButton::clicked, this, [=]() {
+            stack->setCurrentIndex(1);
+        });
+
+        // =========================
+        // INSPECT BACK
+        // =========================
+        connect(backBtn, &QPushButton::clicked, this, [=]() {
+            loadMainPage();
+            stack->setCurrentIndex(1);
+        });
+
+        // =========================
+        // SHOW / HIDE PASSWORD
+        // =========================
+        connect(showBtn, &QPushButton::clicked, this, [=]() {
+            if (passwordEditInspect->echoMode() == QLineEdit::Password) {
+                passwordEditInspect->setEchoMode(QLineEdit::Normal);
+                showBtn->setText("Hide");
+            } else {
+                passwordEditInspect->setEchoMode(QLineEdit::Password);
+                showBtn->setText("Show");
+            }
+        });
+
+        // =========================
+        // UPDATE DB
+        // =========================
+        connect(editBtn, &QPushButton::clicked, this, [=]() {
+            QSqlQuery query;
+            query.prepare(
+                    "UPDATE passwords SET website=?, username=?, password=? WHERE id=?"
+            );
+
+            query.addBindValue(websiteEdit->text());
+            query.addBindValue(usernameEdit->text());
+            query.addBindValue(passwordEditInspect->text());
+            query.addBindValue(currentId);
+
+            if (!query.exec()) {
+                qDebug() << "Update failed:" << query.lastError().text();
+            }
+
+            loadMainPage();
+            stack->setCurrentIndex(1);
+        });
     }
+
+private:
+    void loadMainPage() {
+        QLayoutItem *item;
+        while ((item = listLayout->takeAt(0)) != nullptr) {
+            delete item->widget();
+            delete item;
+        }
+
+        QSqlQuery query("SELECT id, website, username, password FROM passwords");
+
+        while (query.next()) {
+            int id = query.value(0).toInt();
+            QString website = query.value(1).toString();
+            QString username = query.value(2).toString();
+            QString password = query.value(3).toString();
+
+            QPushButton *btn = new QPushButton(website);
+            listLayout->addWidget(btn);
+
+            connect(btn, &QPushButton::clicked, this, [=]() {
+                currentId = id;
+
+                websiteEdit->setText(website);
+                usernameEdit->setText(username);
+                passwordEditInspect->setText(password);
+                passwordEditInspect->setEchoMode(QLineEdit::Password);
+
+                stack->setCurrentIndex(2);
+            });
+        }
+    }
+
+private:
+    QStackedWidget *stack;
+
+    QWidget *loginPage;
+    QWidget *mainPage;
+    QWidget *inspectPage;
+    QWidget *addPage;
+
+    QVBoxLayout *mainLayout;
+    QVBoxLayout *listLayout;
+
+    QScrollArea *scroll;
+    QWidget *container;
+
+    // login
+    QLineEdit *loginPasswordEdit;
+    QLabel *errorLabel;
+
+    // add
+    QLineEdit *addWebsite;
+    QLineEdit *addUsername;
+    QLineEdit *addPassword;
+
+    // inspect
+    QLineEdit *websiteEdit;
+    QLineEdit *usernameEdit;
+    QLineEdit *passwordEditInspect;
+
+    int currentId = -1;
 };
 
+// =========================
+// DB INIT
+// =========================
+bool initDatabase() {
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("password_manager.db");
+
+    if (!db.open()) {
+        qDebug() << "DB error:" << db.lastError().text();
+        return false;
+    }
+
+    QSqlQuery query;
+    query.exec(
+            "CREATE TABLE IF NOT EXISTS passwords ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "website TEXT,"
+            "username TEXT,"
+            "password TEXT"
+            ")"
+    );
+
+    return true;
+}
+
+// =========================
+// MAIN
+// =========================
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
 
+    if (!initDatabase()) return -1;
+
     MainWindow w;
-    w.setWindowTitle("Login");
-    w.resize(300, 150);
+    w.resize(450, 320);
+    w.setWindowTitle("Password Manager");
     w.show();
 
     return a.exec();

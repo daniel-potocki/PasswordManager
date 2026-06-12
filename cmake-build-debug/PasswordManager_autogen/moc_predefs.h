@@ -419,6 +419,7 @@
 #define __UINT_FAST8_TYPE__ unsigned char
 #define __INT_FAST8_TYPE__ signed char
 #define __FLT64X_MIN__ 3.36210314311209350626267781732175260e-4932F64x
+#define QT_SQL_LIB 1
 #define __arm_preserves(...) [[arm::preserves(__VA_ARGS__)]]
 #define __BFLT16_HAS_DENORM__ 1
 #define __GNUC_STDC_INLINE__ 1

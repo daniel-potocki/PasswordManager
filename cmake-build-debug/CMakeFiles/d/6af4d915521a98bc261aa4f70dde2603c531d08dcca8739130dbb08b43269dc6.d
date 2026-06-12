@@ -20,8 +20,10 @@ PasswordManager_autogen/timestamp: \
   /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/Compiler/GNU-CXX.cmake \
   /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/Compiler/GNU.cmake \
   /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/FindOpenGL.cmake \
+  /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/FindOpenSSL.cmake \
   /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/FindPackageHandleStandardArgs.cmake \
   /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/FindPackageMessage.cmake \
+  /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/FindPkgConfig.cmake \
   /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/FindThreads.cmake \
   /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/GNUInstallDirs.cmake \
   /Applications/CLion.app/Contents/bin/cmake/mac/share/cmake-3.26/Modules/Internal/CheckCompilerFlag.cmake \
@@ -205,6 +207,31 @@ PasswordManager_autogen/timestamp: \
   /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6GuiTools/Qt6GuiToolsTargets-relwithdebinfo.cmake \
   /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6GuiTools/Qt6GuiToolsTargets.cmake \
   /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6GuiTools/Qt6GuiToolsVersionlessTargets.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QMimerSQLDriverPluginAdditionalTargetInfo.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QMimerSQLDriverPluginConfig.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QMimerSQLDriverPluginTargets-relwithdebinfo.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QMimerSQLDriverPluginTargets.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QODBCDriverPluginAdditionalTargetInfo.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QODBCDriverPluginConfig.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QODBCDriverPluginTargets-relwithdebinfo.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QODBCDriverPluginTargets.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QPSQLDriverPluginAdditionalTargetInfo.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QPSQLDriverPluginConfig.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QPSQLDriverPluginTargets-relwithdebinfo.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QPSQLDriverPluginTargets.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QSQLiteDriverPluginAdditionalTargetInfo.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QSQLiteDriverPluginConfig.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QSQLiteDriverPluginTargets-relwithdebinfo.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6QSQLiteDriverPluginTargets.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6SqlAdditionalTargetInfo.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6SqlConfig.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6SqlConfigVersion.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6SqlConfigVersionImpl.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6SqlDependencies.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6SqlPlugins.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6SqlTargets-relwithdebinfo.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6SqlTargets.cmake \
+  /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Sql/Qt6SqlVersionlessAliasTargets.cmake \
   /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Widgets/Qt6QMacStylePluginAdditionalTargetInfo.cmake \
   /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Widgets/Qt6QMacStylePluginConfig.cmake \
   /Users/daniel/Qt/6.10.2/macos/lib/cmake/Qt6Widgets/Qt6QMacStylePluginTargets-relwithdebinfo.cmake \

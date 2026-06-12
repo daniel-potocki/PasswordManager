@@ -4,12 +4,17 @@ project(PasswordManager)
 
 set(CMAKE_CXX_STANDARD 20)
 
-set(CMAKE_PREFIX_PATH "/Users/daniel/Qt/6.10.2/macos")
-
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Sql)
+find_package(OpenSSL REQUIRED)
 
 qt_standard_project_setup()
 
-add_executable(PasswordManager main.cpp)
+add_executable(PasswordManager
+        main.cpp
+)
 
-target_link_libraries(PasswordManager PRIVATE Qt6::Widgets)
+target_link_libraries(PasswordManager PRIVATE
+        Qt6::Widgets
+        Qt6::Sql
+        OpenSSL::Crypto
+)
