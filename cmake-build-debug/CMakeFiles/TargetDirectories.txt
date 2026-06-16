@@ -1,5 +1,0 @@
-/Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/PasswordManager.dir
-/Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/PasswordManager_autogen_timestamp_deps.dir
-/Users/daniel/Desktop/PasswordManager/cmake-build-debug/CMakeFiles/PasswordManager_autogen.dir
