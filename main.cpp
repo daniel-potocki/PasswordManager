@@ -9,6 +9,7 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QSqlError>
+#include <QMessageBox>
 
 class MainWindow : public QWidget {
 public:
@@ -33,6 +34,9 @@ public:
         loginLayout->addWidget(loginButton);
         loginLayout->addWidget(errorLabel);
 
+        QPushButton *closeBtnLI = new QPushButton("Close Application");
+        loginLayout->addWidget(closeBtnLI);
+
         // =========================
         // MAIN PAGE
         // =========================
@@ -52,6 +56,9 @@ public:
 
         scroll->setWidget(container);
         mainLayout->addWidget(scroll);
+
+        QPushButton *closeBtn = new QPushButton("Close Application");
+        mainLayout->addWidget(closeBtn);
 
         // =========================
         // INSPECT PAGE
@@ -73,6 +80,7 @@ public:
         QPushButton *showBtn = new QPushButton("Show");
 
         QPushButton *backBtn = new QPushButton("Back");
+        QPushButton *deleteBtn = new QPushButton("Delete");
         QPushButton *editBtn = new QPushButton("Save Changes");
 
         grid->addWidget(websiteLbl, 0, 0);
@@ -87,6 +95,7 @@ public:
 
         inspectLayout->addLayout(grid);
         inspectLayout->addWidget(backBtn);
+        inspectLayout->addWidget(deleteBtn);
         inspectLayout->addWidget(editBtn);
 
         // =========================
@@ -95,17 +104,29 @@ public:
         addPage = new QWidget();
         auto *addLayout = new QVBoxLayout(addPage);
 
+        auto *addGrid = new QGridLayout();
+
         addWebsite = new QLineEdit();
         addUsername = new QLineEdit();
         addPassword = new QLineEdit();
+        addPassword->setEchoMode(QLineEdit::Password);
+        QPushButton *showAddBtn = new QPushButton("Show");
+
+        addGrid->addWidget(new QLabel("Website:"), 0, 0);
+        addGrid->addWidget(addWebsite, 0, 1);
+
+        addGrid->addWidget(new QLabel("Username:"), 1, 0);
+        addGrid->addWidget(addUsername, 1, 1);
+
+        addGrid->addWidget(new QLabel("Password:"), 2, 0);
+        addGrid->addWidget(addPassword, 2, 1);
+        addGrid->addWidget(showAddBtn, 2, 2);
 
         QPushButton *saveBtn = new QPushButton("Save");
         QPushButton *cancelBtn = new QPushButton("Cancel");
 
         addLayout->addWidget(new QLabel("Add Entry"));
-        addLayout->addWidget(addWebsite);
-        addLayout->addWidget(addUsername);
-        addLayout->addWidget(addPassword);
+        addLayout->addLayout(addGrid);
         addLayout->addWidget(saveBtn);
         addLayout->addWidget(cancelBtn);
 
@@ -121,7 +142,7 @@ public:
         rootLayout->addWidget(stack);
 
         // =========================
-        // LOGIN PAGE
+        // LOGIN - CLOSE
         // =========================
         connect(loginButton, &QPushButton::clicked, this, [=]() {
             if (loginPasswordEdit->text() == "1234") {
@@ -133,6 +154,13 @@ public:
             }
         });
 
+        connect(closeBtn, &QPushButton::clicked, this, [=]() {
+            QApplication::quit();
+        });
+        connect(closeBtnLI, &QPushButton::clicked, this, [=]() {
+            QApplication::quit();
+        });
+
         // =========================
         // INSERT INTO DB
         // =========================
@@ -141,14 +169,32 @@ public:
         });
 
         connect(saveBtn, &QPushButton::clicked, this, [=]() {
+
+            if (addWebsite->text().trimmed().isEmpty() ||
+                addUsername->text().trimmed().isEmpty() ||
+                addPassword->text().trimmed().isEmpty()) {
+
+                QMessageBox::warning(
+                        this,
+                        "Missing Data",
+                        "Please fill out all fields."
+                );
+                return;
+            }
+
             QSqlQuery query;
-            query.prepare("INSERT INTO passwords (website, username, password) VALUES (?, ?, ?)");
+            query.prepare(
+                    "INSERT INTO passwords (website, username, password) "
+                    "VALUES (?, ?, ?)"
+            );
+
             query.addBindValue(addWebsite->text());
             query.addBindValue(addUsername->text());
             query.addBindValue(addPassword->text());
 
             if (!query.exec()) {
                 qDebug() << "Insert failed:" << query.lastError().text();
+                return;
             }
 
             addWebsite->clear();
@@ -184,6 +230,18 @@ public:
             }
         });
 
+        connect(showAddBtn, &QPushButton::clicked, this, [=]() {
+
+            if (addPassword->echoMode() == QLineEdit::Password) {
+                addPassword->setEchoMode(QLineEdit::Normal);
+                showAddBtn->setText("Hide");
+            } else {
+                addPassword->setEchoMode(QLineEdit::Password);
+                showAddBtn->setText("Show");
+            }
+
+        });
+
         // =========================
         // UPDATE DB
         // =========================
@@ -200,6 +258,37 @@ public:
 
             if (!query.exec()) {
                 qDebug() << "Update failed:" << query.lastError().text();
+            }
+
+            loadMainPage();
+            stack->setCurrentIndex(1);
+        });
+
+        // ======================
+        // DELETE DATA SET
+        // ======================
+
+        connect(deleteBtn, &QPushButton::clicked, this, [=]() {
+
+            QMessageBox::StandardButton reply;
+
+            reply = QMessageBox::question(
+                    this,
+                    "Delete Entry",
+                    "Are you sure you want to delete this entry?",
+                    QMessageBox::Yes | QMessageBox::No
+            );
+
+            if (reply == QMessageBox::No)
+                return;
+
+            QSqlQuery query;
+            query.prepare("DELETE FROM passwords WHERE id = ?");
+            query.addBindValue(currentId);
+
+            if (!query.exec()) {
+                qDebug() << "Delete failed:" << query.lastError().text();
+                return;
             }
 
             loadMainPage();
