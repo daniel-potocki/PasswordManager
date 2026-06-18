@@ -10,6 +10,141 @@
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QMessageBox>
+#include <QInputDialog>
+#include <QByteArray>
+#include <QRandomGenerator>
+#include <QCryptographicHash>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <argon2.h>
+
+static const char *MASTER_TABLE = "master_auth";
+static const char *PASSWORD_TABLE = "passwords";
+static const int KEY_SIZE = 32;
+static const int IV_SIZE = 12;
+static const int TAG_SIZE = 16;
+static const int SALT_SIZE = 16;
+
+static QByteArray randomBytes(int size) {
+    QByteArray out(size, Qt::Uninitialized);
+    if (RAND_bytes(reinterpret_cast<unsigned char*>(out.data()), size) != 1) {
+        return {};
+    }
+    return out;
+}
+
+static QByteArray hexEncode(const QByteArray &data) {
+    return data.toHex();
+}
+
+static QByteArray hexDecode(const QString &text) {
+    return QByteArray::fromHex(text.toUtf8());
+}
+
+static QByteArray deriveKey(const QString &masterPassword, const QByteArray &salt) {
+    QByteArray key(KEY_SIZE, Qt::Uninitialized);
+
+    const QByteArray passBytes = masterPassword.toUtf8();
+    const int rc = argon2id_hash_raw(
+            3,
+            1 << 16,
+            1,
+            passBytes.constData(),
+            passBytes.size(),
+            salt.constData(),
+            salt.size(),
+            key.data(),
+            key.size()
+    );
+
+    if (rc != ARGON2_OK) {
+        return {};
+    }
+
+    return key;
+}
+
+static QByteArray encryptText(const QString &plainText, const QByteArray &key, QByteArray &ivOut, QByteArray &tagOut) {
+    QByteArray plaintext = plainText.toUtf8();
+    QByteArray ciphertext(plaintext.size() + 32, Qt::Uninitialized);
+
+    ivOut = randomBytes(IV_SIZE);
+    if (ivOut.isEmpty()) return {};
+
+    tagOut = QByteArray(TAG_SIZE, Qt::Uninitialized);
+
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) return {};
+
+    int len = 0;
+    int ciphertextLen = 0;
+
+    bool ok = EVP_EncryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr) == 1;
+    ok = ok && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, IV_SIZE, nullptr) == 1;
+    ok = ok && EVP_EncryptInit_ex(ctx, nullptr, nullptr,
+                                  reinterpret_cast<const unsigned char*>(key.constData()),
+                                  reinterpret_cast<const unsigned char*>(ivOut.constData())) == 1;
+
+    if (ok && EVP_EncryptUpdate(ctx,
+                                reinterpret_cast<unsigned char*>(ciphertext.data()),
+                                &len,
+                                reinterpret_cast<const unsigned char*>(plaintext.constData()),
+                                plaintext.size()) == 1) {
+        ciphertextLen = len;
+        ok = EVP_EncryptFinal_ex(ctx,
+                                 reinterpret_cast<unsigned char*>(ciphertext.data()) + len,
+                                 &len) == 1;
+        ciphertextLen += len;
+        ok = ok && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, TAG_SIZE, tagOut.data()) == 1;
+    } else {
+        ok = false;
+    }
+
+    EVP_CIPHER_CTX_free(ctx);
+
+    if (!ok) return {};
+    ciphertext.resize(ciphertextLen);
+    return ciphertext;
+}
+
+static QString decryptText(const QByteArray &ciphertext, const QByteArray &key, const QByteArray &iv, const QByteArray &tag) {
+    QByteArray plaintext(ciphertext.size() + 32, Qt::Uninitialized);
+
+    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    if (!ctx) return {};
+
+    int len = 0;
+    int plaintextLen = 0;
+    bool ok = EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), nullptr, nullptr, nullptr) == 1;
+    ok = ok && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN, IV_SIZE, nullptr) == 1;
+    ok = ok && EVP_DecryptInit_ex(ctx, nullptr, nullptr,
+                                  reinterpret_cast<const unsigned char*>(key.constData()),
+                                  reinterpret_cast<const unsigned char*>(iv.constData())) == 1;
+
+    if (ok && EVP_DecryptUpdate(ctx,
+                                reinterpret_cast<unsigned char*>(plaintext.data()),
+                                &len,
+                                reinterpret_cast<const unsigned char*>(ciphertext.constData()),
+                                ciphertext.size()) == 1) {
+        plaintextLen = len;
+        ok = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, TAG_SIZE,
+                                 const_cast<char*>(tag.constData())) == 1;
+        if (ok) {
+            ok = EVP_DecryptFinal_ex(ctx,
+                                     reinterpret_cast<unsigned char*>(plaintext.data()) + len,
+                                     &len) == 1;
+            plaintextLen += len;
+        }
+    } else {
+        ok = false;
+    }
+
+    EVP_CIPHER_CTX_free(ctx);
+
+    if (!ok) return {};
+    plaintext.resize(plaintextLen);
+    return QString::fromUtf8(plaintext);
+}
 
 class MainWindow : public QWidget {
 public:
@@ -29,7 +164,7 @@ public:
         errorLabel = new QLabel();
         errorLabel->setStyleSheet("color: red;");
 
-        loginLayout->addWidget(new QLabel("Password:"));
+        loginLayout->addWidget(new QLabel("Master Password:"));
         loginLayout->addWidget(loginPasswordEdit);
         loginLayout->addWidget(loginButton);
         loginLayout->addWidget(errorLabel);
@@ -142,11 +277,19 @@ public:
         rootLayout->addWidget(stack);
 
         // =========================
-        // LOGIN - CLOSE
+        // FIRST START / LOGIN
         // =========================
+        ensureMasterPasswordExists();
+
         connect(loginButton, &QPushButton::clicked, this, [=]() {
-            if (loginPasswordEdit->text() == "1234") {
+            if (verifyMasterPassword(loginPasswordEdit->text())) {
                 errorLabel->clear();
+                currentMasterPassword = loginPasswordEdit->text();
+                currentMasterKey = deriveCurrentKey();
+                if (currentMasterKey.isEmpty()) {
+                    errorLabel->setText("Key derivation failed!");
+                    return;
+                }
                 loadMainPage();
                 stack->setCurrentIndex(1);
             } else {
@@ -165,6 +308,7 @@ public:
         // INSERT INTO DB
         // =========================
         connect(openAddBtn, &QPushButton::clicked, this, [=]() {
+            if (currentMasterKey.isEmpty()) return;
             stack->setCurrentIndex(3);
         });
 
@@ -182,15 +326,29 @@ public:
                 return;
             }
 
+            if (currentMasterKey.isEmpty()) {
+                QMessageBox::warning(this, "Error", "No active master key.");
+                return;
+            }
+
+            QByteArray iv, tag;
+            QByteArray cipher = encryptText(addPassword->text(), currentMasterKey, iv, tag);
+            if (cipher.isEmpty()) {
+                QMessageBox::warning(this, "Error", "Encryption failed.");
+                return;
+            }
+
             QSqlQuery query;
             query.prepare(
-                    "INSERT INTO passwords (website, username, password) "
-                    "VALUES (?, ?, ?)"
+                    "INSERT INTO passwords (website, username, password, iv, tag) "
+                    "VALUES (?, ?, ?, ?, ?)"
             );
 
             query.addBindValue(addWebsite->text());
             query.addBindValue(addUsername->text());
-            query.addBindValue(addPassword->text());
+            query.addBindValue(QString::fromUtf8(cipher.toBase64()));
+            query.addBindValue(QString::fromUtf8(iv.toBase64()));
+            query.addBindValue(QString::fromUtf8(tag.toBase64()));
 
             if (!query.exec()) {
                 qDebug() << "Insert failed:" << query.lastError().text();
@@ -246,14 +404,25 @@ public:
         // UPDATE DB
         // =========================
         connect(editBtn, &QPushButton::clicked, this, [=]() {
+            if (currentMasterKey.isEmpty()) return;
+
+            QByteArray iv, tag;
+            QByteArray cipher = encryptText(passwordEditInspect->text(), currentMasterKey, iv, tag);
+            if (cipher.isEmpty()) {
+                QMessageBox::warning(this, "Error", "Encryption failed.");
+                return;
+            }
+
             QSqlQuery query;
             query.prepare(
-                    "UPDATE passwords SET website=?, username=?, password=? WHERE id=?"
+                    "UPDATE passwords SET website=?, username=?, password=?, iv=?, tag=? WHERE id=?"
             );
 
             query.addBindValue(websiteEdit->text());
             query.addBindValue(usernameEdit->text());
-            query.addBindValue(passwordEditInspect->text());
+            query.addBindValue(QString::fromUtf8(cipher.toBase64()));
+            query.addBindValue(QString::fromUtf8(iv.toBase64()));
+            query.addBindValue(QString::fromUtf8(tag.toBase64()));
             query.addBindValue(currentId);
 
             if (!query.exec()) {
@@ -294,9 +463,94 @@ public:
             loadMainPage();
             stack->setCurrentIndex(1);
         });
+
+        stack->setCurrentIndex(0);
     }
 
 private:
+    void ensureMasterPasswordExists() {
+        QSqlQuery query;
+        query.exec("SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='master_auth'");
+
+        QSqlQuery check;
+        check.exec("SELECT COUNT(*) FROM master_auth");
+        bool hasMaster = false;
+        if (check.next()) {
+            hasMaster = check.value(0).toInt() > 0;
+        }
+
+        if (!hasMaster) {
+            bool ok = false;
+            QString pass1 = QInputDialog::getText(
+                    this,
+                    "Set Master Password",
+                    "Create your master password:",
+                    QLineEdit::Password,
+                    "",
+                    &ok
+            );
+            if (!ok || pass1.isEmpty()) {
+                QApplication::quit();
+                return;
+            }
+
+            QString pass2 = QInputDialog::getText(
+                    this,
+                    "Set Master Password",
+                    "Confirm your master password:",
+                    QLineEdit::Password,
+                    "",
+                    &ok
+            );
+            if (!ok || pass2.isEmpty() || pass1 != pass2) {
+                QMessageBox::warning(this, "Error", "Passwords do not match.");
+                QApplication::quit();
+                return;
+            }
+
+            QByteArray salt = randomBytes(SALT_SIZE);
+            QByteArray key = deriveKey(pass1, salt);
+            if (key.isEmpty()) {
+                QMessageBox::warning(this, "Error", "Could not create master password.");
+                QApplication::quit();
+                return;
+            }
+
+            QByteArray hash = QCryptographicHash::hash(pass1.toUtf8() + salt, QCryptographicHash::Sha256).toHex();
+
+            QSqlQuery insert;
+            insert.prepare("INSERT INTO master_auth (salt, password_hash) VALUES (?, ?)");
+            insert.addBindValue(QString::fromUtf8(salt.toBase64()));
+            insert.addBindValue(QString::fromUtf8(hash));
+
+            if (!insert.exec()) {
+                QMessageBox::warning(this, "Error", "Could not store master password.");
+                QApplication::quit();
+                return;
+            }
+
+            QMessageBox::information(this, "Done", "Master password created. Please log in.");
+        }
+    }
+
+    bool verifyMasterPassword(const QString &password) {
+        QSqlQuery query("SELECT salt, password_hash FROM master_auth LIMIT 1");
+        if (!query.next()) return false;
+
+        QByteArray salt = QByteArray::fromBase64(query.value(0).toString().toUtf8());
+        QByteArray storedHash = query.value(1).toString().toUtf8();
+
+        QByteArray candidate = QCryptographicHash::hash(password.toUtf8() + salt, QCryptographicHash::Sha256).toHex();
+        return candidate == storedHash;
+    }
+
+    QByteArray deriveCurrentKey() const {
+        QSqlQuery query("SELECT salt FROM master_auth LIMIT 1");
+        if (!query.next()) return {};
+        QByteArray salt = QByteArray::fromBase64(query.value(0).toString().toUtf8());
+        return deriveKey(currentMasterPassword, salt);
+    }
+
     void loadMainPage() {
         QLayoutItem *item;
         while ((item = listLayout->takeAt(0)) != nullptr) {
@@ -304,13 +558,18 @@ private:
             delete item;
         }
 
-        QSqlQuery query("SELECT id, website, username, password FROM passwords");
+        if (currentMasterKey.isEmpty()) return;
+
+        QSqlQuery query("SELECT id, website, username, password, iv, tag FROM passwords");
 
         while (query.next()) {
             int id = query.value(0).toInt();
             QString website = query.value(1).toString();
             QString username = query.value(2).toString();
-            QString password = query.value(3).toString();
+            QByteArray cipher = QByteArray::fromBase64(query.value(3).toString().toUtf8());
+            QByteArray iv = QByteArray::fromBase64(query.value(4).toString().toUtf8());
+            QByteArray tag = QByteArray::fromBase64(query.value(5).toString().toUtf8());
+            QString password = decryptText(cipher, currentMasterKey, iv, tag);
 
             QPushButton *btn = new QPushButton(website);
             listLayout->addWidget(btn);
@@ -357,6 +616,8 @@ private:
     QLineEdit *passwordEditInspect;
 
     int currentId = -1;
+    QString currentMasterPassword;
+    QByteArray currentMasterKey;
 };
 
 // =========================
@@ -373,11 +634,21 @@ bool initDatabase() {
 
     QSqlQuery query;
     query.exec(
+            "CREATE TABLE IF NOT EXISTS master_auth ("
+            "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            "salt TEXT NOT NULL,"
+            "password_hash TEXT NOT NULL"
+            ")"
+    );
+
+    query.exec(
             "CREATE TABLE IF NOT EXISTS passwords ("
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"
             "website TEXT,"
             "username TEXT,"
-            "password TEXT"
+            "password TEXT,"
+            "iv TEXT,"
+            "tag TEXT"
             ")"
     );
 
