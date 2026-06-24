@@ -17,6 +17,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <argon2.h>
+#include <QIcon>
 
 static const char *MASTER_TABLE = "master_auth";
 static const char *PASSWORD_TABLE = "passwords";
@@ -660,6 +661,7 @@ bool initDatabase() {
 // =========================
 int main(int argc, char *argv[]) {
     QApplication a(argc, argv);
+    a.setWindowIcon(QIcon(":/icons/app.png"));
 
     if (!initDatabase()) return -1;
 

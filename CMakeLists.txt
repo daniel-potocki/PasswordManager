@@ -22,8 +22,19 @@ endif()
 
 qt_standard_project_setup()
 
-add_executable(PasswordManager
+set(APP_ICON_MACOS "${CMAKE_CURRENT_SOURCE_DIR}/icons/app.icns")
+set(APP_ICON_WINDOWS "${CMAKE_CURRENT_SOURCE_DIR}/appicon.rc")
+
+set_source_files_properties(${APP_ICON_MACOS} PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources"
+)
+
+qt_add_executable(PasswordManager
+        MANUAL_FINALIZATION
         main.cpp
+        resources.qrc
+        ${APP_ICON_WINDOWS}
+        ${APP_ICON_MACOS}
 )
 
 target_include_directories(PasswordManager PRIVATE
@@ -36,3 +47,11 @@ target_link_libraries(PasswordManager PRIVATE
         OpenSSL::Crypto
         ${ARGON2_LIBRARY}
 )
+
+set_target_properties(PasswordManager PROPERTIES
+        WIN32_EXECUTABLE TRUE
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_ICON_FILE app.icns
+)
+
+qt_finalize_executable(PasswordManager)
