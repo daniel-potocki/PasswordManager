@@ -18,6 +18,11 @@
 #include <openssl/rand.h>
 #include <argon2.h>
 #include <QIcon>
+#include <QStandardPaths>
+#include <QDir>
+#include <QFileInfo>
+#include <QDebug>
+#include <filesystem>
 
 static const char *MASTER_TABLE = "master_auth";
 static const char *PASSWORD_TABLE = "passwords";
@@ -165,8 +170,9 @@ public:
         errorLabel = new QLabel();
         errorLabel->setStyleSheet("color: red;");
 
-        loginLayout->addWidget(new QLabel("Master Password:"));
-        loginLayout->addWidget(loginPasswordEdit);
+        QLabel *loginLabel = new QLabel("Type in master password:");
+        loginLabel->setAlignment(Qt::AlignCenter);
+        loginLayout->addWidget(loginLabel, 0, Qt::AlignHCenter);        loginLayout->addWidget(loginPasswordEdit);
         loginLayout->addWidget(loginButton);
         loginLayout->addWidget(errorLabel);
 
@@ -179,7 +185,9 @@ public:
         mainPage = new QWidget();
         mainLayout = new QVBoxLayout(mainPage);
 
-        mainLayout->addWidget(new QLabel("Main Menu"));
+        QLabel *mainMenuLabel = new QLabel("Main Menu");
+        mainMenuLabel->setAlignment(Qt::AlignHCenter);
+        mainLayout->addWidget(mainMenuLabel);
 
         QPushButton *openAddBtn = new QPushButton("Add new password");
         mainLayout->addWidget(openAddBtn);
@@ -261,7 +269,9 @@ public:
         QPushButton *saveBtn = new QPushButton("Save");
         QPushButton *cancelBtn = new QPushButton("Cancel");
 
-        addLayout->addWidget(new QLabel("Add Entry"));
+        QLabel *addEntryLabel = new QLabel("Add Entry");
+        addEntryLabel->setAlignment(Qt::AlignHCenter);
+        addLayout->addWidget(addEntryLabel);
         addLayout->addLayout(addGrid);
         addLayout->addWidget(saveBtn);
         addLayout->addWidget(cancelBtn);
@@ -626,7 +636,15 @@ private:
 // =========================
 bool initDatabase() {
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("password_manager.db");
+
+    QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    QByteArray dataPathUtf8 = dataPath.toUtf8();
+    std::filesystem::create_directories(std::string(dataPathUtf8.constData()));
+
+    QString dbPath = dataPath + "/password_manager.db";
+    qDebug() << "DB path:" << dbPath;
+
+    db.setDatabaseName(dbPath);
 
     if (!db.open()) {
         qDebug() << "DB error:" << db.lastError().text();
